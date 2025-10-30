@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Hypothesis Research Demo</title>
+<style>
+/* Reset & Body */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin:0; padding:0;
+  background: linear-gradient(135deg, #0d0d1a, #1a1a2e);
+  color: #eee;
+  overflow-x: hidden;
+}
+
+/* Welcome Page */
+#welcomePage, #mainContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+#welcomePage h1 {
+  font-size: 3em;
+  color: #ff8c00;
+  text-shadow: 0 0 20px #ff8c00;
+}
+#welcomePage p {
+  font-size: 1.3em;
+  margin: 15px 0;
+}
+button {
+  padding: 15px 35px;
+  background: linear-gradient(90deg,#00ddff,#00aabb);
+  border: none;
+  color: #111;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-top: 20px;
+  border-radius: 12px;
+  transition: 0.3s;
+  box-shadow: 0 0 15px #00ddff;
+}
+button:hover { background: linear-gradient(90deg,#00aabb,#00ffcc); box-shadow: 0 0 25px #00ffcc; color:#fff; }
+
+/* Main Content */
+h1 { color: #ff8c00; text-align: center; text-shadow: 0 0 15px #ff8c00; margin-top:20px; }
+p { font-size:1.1em; margin-top:0; max-width: 900px; text-align:center; }
+
+/* Layout */
+#contentArea { display:flex; flex-direction:row; justify-content:space-between; width:90%; max-width:1200px; margin-top:20px; gap:20px; }
+#leftPanel, #rightPanel { flex:1; display:flex; flex-direction:column; gap:15px; }
+
+/* Tabs */
+.tabs { display:flex; justify-content:center; margin-top:10px; }
+.tabBtn {
+  padding: 10px 25px; margin:0 5px;
+  background: rgba(0,221,255,0.1); border:none; color:#eee;
+  cursor:pointer; font-weight:bold; border-radius:10px;
+  transition:0.3s; box-shadow:0 0 10px rgba(0,221,255,0.3);
+}
+.tabBtn.active { background: #00ddff; color:#111; box-shadow:0 0 15px #00ffcc; }
+.tabContent { display:none; max-height:400px; overflow-y:auto; width:100%; }
+
+/* Table */
+#zerosTable { border-collapse: collapse; width:100%; }
+td, th { border: 1px solid #eee; padding: 10px; text-align: center; }
+tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+tr:hover { background: rgba(0,221,255,0.2); }
+
+/* Observation */
+.observation {
+  background: rgba(255,255,255,0.05);
+  padding: 20px; border-left: 6px solid #ff8c00;
+  box-shadow: 0 0 15px #ff8c00; border-radius:8px;
+}
+
+/* Graph */
+#graph {
+  width: 90%; max-width: 1200px; height: 400px;
+  background: radial-gradient(circle at top left, #111, #1a1a2e);
+  border: 2px solid #ff8c00; margin-top: 30px;
+  position: relative; border-radius:12px;
+  box-shadow: 0 0 20px #ff8c00;
+  overflow: hidden;
+}
+.zeroDot {
+  width: 8px; height: 8px; background: #00ffdd;
+  border-radius: 50%; position: absolute;
+  transform: translate(-4px,-4px);
+  box-shadow: 0 0 8px #00ffdd;
+  transition: 0.2s;
+}
+.zeroDot:hover { transform: translate(-4px,-4px) scale(1.3); box-shadow:0 0 20px #00ffdd; }
+.lineConnect {
+  position:absolute; background:#ff8c00; height:1px; transform-origin:left center;
+}
+.tooltip {
+  position: absolute; background: rgba(0,0,0,0.8);
+  padding: 5px 10px; border-radius:5px; display:none; font-size:14px; color:#00ffdd;
+}
+
+/* Loader */
+#loader { display:none; margin-top:20px; width:200px; height:20px; border:1px solid #00ddff; border-radius:10px; overflow:hidden; }
+#loaderInner { width:0%; height:100%; background:#00ddff; border-radius:10px; transition:0.2s; }
+#loaderText { text-align:center; margin-top:5px; font-size:14px; color:#00ffdd; }
+
+/* Footer */
+footer { font-size:10px; color:#888; text-align:center; margin:20px 0; }
+</style>
+</head>
+<body>
+
+<!-- Welcome Page -->
+<div id="welcomePage">
+  <h1>Welcome to My Riemann Hypothesis Demo</h1>
+  <p>I believe the Riemann Hypothesis can be explored computationally in a new way. This tool reveals patterns among zeros of the Riemann zeta function along the critical line.</p>
+  <button onclick="enterSite()">Enter</button>
+</div>
+
+<!-- Main Content -->
+<div id="mainContent" style="display:none;">
+  <h1>Novel Computational Approach to the Riemann Hypothesis</h1>
+  <p>This tool computes approximate zeros along Re(s)=0.5 and identifies patterns.</p>
+  <button onclick="computeZeros()">Compute Zeros Up to t = 1000</button>
+
+  <div id="loader"><div id="loaderInner"></div></div>
+  <div id="loaderText"></div>
+
+  <div id="contentArea">
+    <div id="leftPanel">
+      <div class="tabs">
+        <button class="tabBtn active" onclick="showTab('tableTab', this)">Zeros Table</button>
+        <button class="tabBtn" onclick="showTab('obsTab', this)">Observations</button>
+      </div>
+      <div id="tableTab" class="tabContent" style="display:block;">
+        <table id="zerosTable">
+          <tr><th>Index</th><th>Imaginary Part (Approx)</th><th>Spacing</th></tr>
+        </table>
+      </div>
+      <div id="obsTab" class="tabContent">
+        <div class="observation" id="observations">
+          <ul id="obsList"></ul>
+        </div>
+      </div>
+    </div>
+    <div id="rightPanel">
+      <div id="graph"></div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <footer>Made by Isija</footer>
+</div>
+
+<script>
+function enterSite() {
+  document.getElementById('welcomePage').style.display='none';
+  document.getElementById('mainContent').style.display='flex';
+}
+
+function showTab(tabId, btn){
+  document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tabContent').forEach(c=>c.style.display='none');
+  document.getElementById(tabId).style.display='block';
+}
+
+// Simplified zeta approximation
+function zetaApprox(t) {
+  let sum=0; for(let n=1;n<=200;n++) sum+=Math.cos(t*Math.log(n))/Math.pow(n,0.5);
+  return sum;
+}
+
+function computeZeros() {
+  const table=document.getElementById('zerosTable');
+  const obsList=document.getElementById('obsList');
+  const graph=document.getElementById('graph');
+  const tooltip=document.getElementById('tooltip');
+  const loader=document.getElementById('loader');
+  const loaderInner=document.getElementById('loaderInner');
+  const loaderText=document.getElementById('loaderText');
+  
+  table.innerHTML="<tr><th>Index</th><th>Imaginary Part (Approx)</th><th>Spacing</th></tr>";
+  obsList.innerHTML=""; graph.innerHTML="";
+  loader.style.display='block'; loaderInner.style.width='0%'; loaderText.innerText="Initializing...";
+
+  let lastSign=0, lastZero=null, count=0, t=10;
+  const zeros=[];
+
+  function computeBatch(){
+    const batchSize=200;
+    const end=Math.min(t+batchSize*0.05,1000);
+    while(t<end){
+      const val=zetaApprox(t);
+      const sign=Math.sign(val);
+      if(lastSign!==0 && sign!==lastSign){
+        count++; zeros.push(t);
+        const spacing=lastZero?(t-lastZero).toFixed(4):"-";
+        const row=table.insertRow();
+        row.insertCell(0).innerText=count;
+        row.insertCell(1).innerText=t.toFixed(4);
+        row.insertCell(2).innerText=spacing;
+        lastZero=t;
+
+        // Graph dot
+        const dot=document.createElement('div');
+        dot.className='zeroDot';
+        const x=(t-10)/990*graph.clientWidth;
+        const y=graph.clientHeight-(val+5);
+        dot.style.left=x+'px'; dot.style.top=y+'px';
+        dot.addEventListener('mouseover',e=>{
+          tooltip.style.display='block';
+          tooltip.innerText=`Zero ${count}: t ≈ ${t.toFixed(4)}`;
+        });
+        dot.addEventListener('mousemove',e=>{
+          tooltip.style.left=e.pageX+10+'px';
+          tooltip.style.top=e.pageY+10+'px';
+        });
+        dot.addEventListener('mouseout',e=>tooltip.style.display='none');
+        graph.appendChild(dot);
+
+        // Connect to previous zero
+        if(count>1){
+          const prevX=(zeros[count-2]-10)/990*graph.clientWidth;
+          const prevY=graph.clientHeight-(zetaApprox(zeros[count-2])+5);
+          const line=document.createElement('div');
+          line.className='lineConnect';
+          const dx=x-prevX, dy=y-prevY, length=Math.sqrt(dx*dx+dy*dy);
+          line.style.width=length+'px';
+          line.style.left=prevX+'px';
+          line.style.top=prevY+'px';
+          line.style.transform=`rotate(${Math.atan2(dy,dx)}rad)`;
+          graph.appendChild(line);
+        }
+      }
+      lastSign=sign; t+=0.05;
+    }
+    loaderInner.style.width=((t-10)/990*100).toFixed(2)+'%';
+    loaderText.innerText=`Computing zeros… (${count} detected)`;
+    if(t<=1000) requestAnimationFrame(computeBatch);
+    else{
+      loader.style.display='none'; loaderText.innerText="Computation complete.";
+
+      // Pattern analysis
+      let closestSpacing=Infinity, closestPair=[0,0];
+      let totalSpacing=0;
+      for(let i=1;i<zeros.length;i++){
+        const spacing=zeros[i]-zeros[i-1]; totalSpacing+=spacing;
+        if(spacing<closestSpacing) { closestSpacing=spacing; closestPair=[i,i+1]; }
+        if(spacing<0.8){
+          let li=document.createElement('li');
+          li.innerText=`Zeros ${i} and ${i+1} are unusually close: spacing ≈ ${spacing.toFixed(4)}`;
+          obsList.appendChild(li);
+        }
+      }
+      let li1=document.createElement('li');
+      li1.innerText=`Closest zero pair: Zeros ${closestPair[0]} & ${closestPair[1]}, spacing ≈ ${closestSpacing.toFixed(4)}`;
+      obsList.appendChild(li1);
+      let li2=document.createElement('li');
+      li2.innerText=`Average spacing ≈ ${(totalSpacing/(zeros.length-1)).toFixed(4)}`;
+      obsList.appendChild(li2);
+      let li3=document.createElement('li');
+      li3.innerText=`Total zeros detected: ${zeros.length}.`;
+      obsList.appendChild(li3);
+    }
+  }
+
+  requestAnimationFrame(computeBatch);
+}
+</script>
+</body>
+</html>
